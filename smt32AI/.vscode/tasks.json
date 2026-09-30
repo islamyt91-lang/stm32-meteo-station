@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Build",
+            "type": "shell",
+            "command": "cmake -B smt32AI/build -S smt32AI -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake ; cmake --build smt32AI/build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CMake: Flash",
+            "type": "shell",
+            "command": "& 'C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeProgrammer\\bin\\STM32_Programmer_CLI.exe' -c port=SWD -w smt32AI/build/Debug/smt32AI.elf -rst",
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}
