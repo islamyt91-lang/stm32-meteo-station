@@ -14,7 +14,7 @@
         {
             "label": "CMake: Flash",
             "type": "shell",
-            "command": "& 'C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeProgrammer\\bin\\STM32_Programmer_CLI.exe' -c port=SWD -w smt32AI/build/Debug/smt32AI.elf -rst",
+            "command": "& 'C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeProgrammer\\bin\\STM32_Programmer_CLI.exe' -c port=SWD mode=UR -w smt32AI/build/Debug/smt32AI.elf -rst",
             "group": "none",
             "problemMatcher": []
         }
