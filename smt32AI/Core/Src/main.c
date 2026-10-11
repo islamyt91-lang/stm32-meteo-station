@@ -2,8 +2,8 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Test BH1750 : la LED verte (LD2) s'allume quand on
-  *                   approche la lampe torche d'un telephone du capteur
+  * @brief          : Station meteo STM32L476RG - point d'entree
+  *                   Toute la logique est dans station_modes.c
   ******************************************************************************
   * @attention
   *
@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "sensor_test.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,16 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BH1750_ADDR        (0x23 << 1)   /* broche ADDR libre ou a GND */
 
-/* LED verte LD2 de la Nucleo-L476RG = PA5 */
-#define LED_PORT           GPIOA
-#define LED_PIN            GPIO_PIN_5
-
-/* Seuil d'allumage de la LED, en dixiemes de lux : 5000 = 500 lux.
-   Une piece normale = 100 a 300 lux, une lampe torche de telephone
-   a quelques cm = plusieurs milliers de lux. */
-#define LUX_THRESHOLD_X10  5000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,7 +53,9 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-volatile uint32_t lux10 = 0;   /* lux x10 : 3456 = 345.6 lux (a suivre en debug) */
+/* Handle EXTI de la ligne 13 (bouton B1) : requis par stm32l4xx_it.c (H_EXTI_13).
+   Initialise des la compilation pour que l'interruption soit toujours acquittee. */
+EXTI_HandleTypeDef hexti13 = { .Line = EXTI_LINE_13 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,46 +109,7 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-
-  /* --- LED verte LD2 (PA5) en sortie, geree directement --- */
-  GPIO_InitTypeDef led = {0};
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  led.Pin   = LED_PIN;
-  led.Mode  = GPIO_MODE_OUTPUT_PP;
-  led.Pull  = GPIO_NOPULL;
-  led.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_PORT, &led);
-  HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
-
-  /* --- Test de la LED : 3 clignotements lents au demarrage ---
-     Si tu les vois, la LED fonctionne. */
-  for (int i = 0; i < 3; i++)
-  {
-    HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_SET);
-    HAL_Delay(400);
-    HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
-    HAL_Delay(400);
-  }
-
-  /* --- Initialisation du capteur BH1750 --- */
-  uint8_t cmd = 0x01;                                    /* allumer le capteur */
-  HAL_StatusTypeDef st = HAL_I2C_Master_Transmit(&hi2c1, BH1750_ADDR, &cmd, 1, 100);
-  if (st == HAL_OK)
-  {
-    cmd = 0x10;                                          /* mesure continue 1 lx */
-    st = HAL_I2C_Master_Transmit(&hi2c1, BH1750_ADDR, &cmd, 1, 100);
-  }
-  HAL_Delay(200);                                        /* 1ere mesure ~180 ms */
-
-  if (st != HAL_OK)
-  {
-    /* Capteur NON detecte : la LED clignote tres vite, sans fin */
-    while (1)
-    {
-      HAL_GPIO_TogglePin(LED_PORT, LED_PIN);
-      HAL_Delay(80);
-    }
-  }
+  SensorTest_Init();
   /* USER CODE END 2 */
 
   /* Initialize leds */
@@ -171,18 +125,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    uint8_t buf[2];
-    if (HAL_I2C_Master_Receive(&hi2c1, BH1750_ADDR, buf, 2, 100) == HAL_OK)
-    {
-      uint32_t raw = ((uint32_t)buf[0] << 8) | buf[1];
-      lux10 = (raw * 10U) / 12U;                         /* lux = raw / 1.2 */
-
-      if (lux10 >= LUX_THRESHOLD_X10)
-        HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_SET);     /* beaucoup de lumiere */
-      else
-        HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);   /* peu de lumiere */
-    }
-    HAL_Delay(100);
+    SensorTest_Process();
   }
   /* USER CODE END 3 */
 }

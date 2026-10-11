@@ -55,7 +55,10 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+/* Handle EXTI du bouton B1 (ligne 13), defini dans main.c.
+   Requis par stm32l4xx_it.c (H_EXTI_13) avec ce BSP Nucleo. */
+extern EXTI_HandleTypeDef hexti13;
+#define H_EXTI_13 hexti13
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
