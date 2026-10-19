@@ -15,8 +15,11 @@
  *  jusqu'à réussite ou TIMEOUT, puis écrit UNE ligne horodatée. Pendant ce
  *  temps les boutons et la console continuent d'être traités.
  *
- *  GPS et carte SD : retirés de cette version (aucune erreur associée).
- *  La ligne produite est déjà au format CSV prévu pour le fichier .LOG.
+ *  GPS (USART3) et carte SD (SPI1/FatFS) sont intégrés :
+ *   - la position GPS est ajoutée à la ligne de mesure (modes standard/éco)
+ *   - la ligne est écrite dans le fichier .LOG de la carte SD
+ *   - en mode maintenance la carte SD est démontée (retrait sûr)
+ *   - en mode économique le GPS n'est lu qu'une mesure sur deux
  */
 #include "www_app.h"
 #include "main.h"
@@ -28,6 +31,8 @@
 #include "dht11.h"
 #include "bh1750.h"
 #include "rtc_clock.h"
+#include "gps.h"
+#include "sd_card.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -92,6 +97,15 @@ static void fmt_x10(char *buf, size_t n, int32_t v)
     snprintf(buf, n, "%s%ld.%ld", sign, (long)(v / 10), (long)(v % 10));
 }
 
+/** Écrit une position en micro-degrés sous forme "48.852057". */
+static void fmt_udeg(char *buf, size_t n, int32_t v)
+{
+    const char *sign = (v < 0) ? "-" : "";
+    uint32_t a = (v < 0) ? (uint32_t)(-v) : (uint32_t)v;
+    snprintf(buf, n, "%s%lu.%06lu", sign,
+             (unsigned long)(a / 1000000u), (unsigned long)(a % 1000000u));
+}
+
 static uint32_t current_period_ms(void)
 {
     uint32_t p = g_settings.log_interval_s * 1000u;
@@ -110,14 +124,17 @@ static bool acquisition_mode(Mode m)
 /* ========================================================================== */
 static void update_led(void)
 {
-    /* Priorité : RTC > accès capteur > données incohérentes > couleur du mode */
+    /* Priorité : RTC > GPS > capteur > incohérent > carte SD > couleur du mode */
     if (!RtcClock_IsOk()) {
         RGB_SetBlink(RGB_RED, 500, RGB_BLUE, 500);
         return;
     }
     if (acquisition_mode(s_mode)) {
-        if (s_errSensorAccess) { RGB_SetBlink(RGB_RED, 500, RGB_GREEN, 500); return; }
-        if (s_errIncoherent)   { RGB_SetBlink(RGB_RED, 333, RGB_GREEN, 667); return; }
+        if (Gps_Error())        { RGB_SetBlink(RGB_RED, 500, RGB_YELLOW, 500); return; }
+        if (SdCard_IsFull())    { RGB_SetBlink(RGB_RED, 500, RGB_WHITE, 500);  return; }
+        if (SdCard_Error())     { RGB_SetBlink(RGB_RED, 500, RGB_WHITE, 1000); return; }
+        if (s_errSensorAccess)  { RGB_SetBlink(RGB_RED, 500, RGB_GREEN, 500);  return; }
+        if (s_errIncoherent)    { RGB_SetBlink(RGB_RED, 333, RGB_GREEN, 667);  return; }
     }
     switch (s_mode) {
     case MODE_STANDARD: RGB_SetSolid(RGB_GREEN);  break;
@@ -132,7 +149,8 @@ static void update_led(void)
 /* ========================================================================== */
 static void print_header(void)
 {
-    printf("DATE_HEURE;MODE;TEMP_AIR_C;HYGR_PCT;LUMIN_LUX;LUMIN_NIVEAU\r\n");
+    printf("DATE_HEURE;MODE;TEMP_AIR_C;HYGR_PCT;LUMIN_LUX;LUMIN_NIVEAU;"
+           "GPS_LAT;GPS_LON;GPS_VIT_NOEUD\r\n");
 }
 
 static void acq_start(uint32_t now)
@@ -185,14 +203,20 @@ static bool acq_finished(void)
 static void acq_finish(void)
 {
     char ts[32], tStr[12], hStr[12], lStr[16];
+    char gpsLat[16], gpsLon[16], gpsSpd[12];
+    char line[192];
     const char *lvl = "NA";
     bool incoherent = false;
     RtcDateTime dt;
+    GpsData gps;
 
     s_acq.active = false;
     strcpy(tStr, "NA");
     strcpy(hStr, "NA");
     strcpy(lStr, "NA");
+    strcpy(gpsLat, "NA");
+    strcpy(gpsLon, "NA");
+    strcpy(gpsSpd, "NA");
 
     /* ---- Horodatage */
     if (RtcClock_Get(&dt)) {
@@ -256,8 +280,35 @@ static void acq_finish(void)
         s_luxTimeouts = 0;
     }
 
-    /* ---- Une seule ligne par acquisition */
-    printf("%s;%s;%s;%s;%s;%s\r\n", ts, mode_name(s_mode), tStr, hStr, lStr, lvl);
+    /* ---- GPS : en mode économique, une mesure sur deux seulement */
+    {
+        static uint8_t s_ecoCpt;
+        bool doGps = (s_mode != MODE_ECO) || ((s_ecoCpt++ & 1u) == 0u);
+
+        if (doGps) {
+            Gps_GetLast(&gps);
+            if (gps.fixed) {
+                fmt_udeg(gpsLat, sizeof(gpsLat), gps.lat_udeg);
+                fmt_udeg(gpsLon, sizeof(gpsLon), gps.lon_udeg);
+                fmt_x10(gpsSpd, sizeof(gpsSpd), (int32_t)gps.speed_x10);
+            } else {
+                printf("[INFO] GPS sans position (fix) pour l'instant\r\n");
+            }
+        }
+    }
+
+    /* ---- Une seule ligne par acquisition (console + carte SD) */
+    snprintf(line, sizeof(line), "%s;%s;%s;%s;%s;%s;%s;%s;%s",
+             ts, mode_name(s_mode), tStr, hStr, lStr, lvl,
+             gpsLat, gpsLon, gpsSpd);
+    printf("%s\r\n", line);
+
+    /* ---- Journal sur carte SD (jamais en mode maintenance) */
+    if (s_mode != MODE_MAINT) {
+        if (!SdCard_AppendLine(line)) {
+            printf("[INFO] Mesure non enregistree sur la carte SD\r\n");
+        }
+    }
 
     /* ---- Mise à jour des erreurs */
     s_errSensorAccess = (s_dhtTimeouts >= 2) || (s_luxTimeouts >= 2);
@@ -281,6 +332,12 @@ static void enter_mode(Mode m)
     Mode old = s_mode;
 
     acq_abort();
+
+    /* Sortie du mode maintenance : on remonte la carte SD */
+    if (old == MODE_MAINT && m != MODE_MAINT) {
+        SdCard_Remount();
+    }
+
     s_mode = m;
     printf("\r\n=== Mode %s ===\r\n", mode_name(m));
 
@@ -294,6 +351,7 @@ static void enter_mode(Mode m)
         break;
     case MODE_MAINT:
         s_maintReturn = old;
+        SdCard_Unmount();          /* carte SD demontee : retrait sans risque */
         printf("Mesures en direct toutes les %lu s. La carte SD peut etre retiree.\r\n"
                "Rouge 5 s : retour en mode %s.\r\n",
                (unsigned long)(WWW_MAINT_PERIOD_MS / 1000u), mode_name(old));
@@ -658,6 +716,7 @@ void App_Loop(void)
 {
     uint32_t now = HAL_GetTick();
 
+    Gps_Poll();                /* consomme les trames NMEA reçues (USART3) */
     Buttons_Update(now);
     handle_buttons();
     handle_console(now);

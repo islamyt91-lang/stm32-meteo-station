@@ -18,6 +18,10 @@
 /* USER CODE END Header */
 #include "fatfs.h"
 
+/* USER CODE BEGIN Includes */
+#include "rtc_clock.h"
+/* USER CODE END Includes */
+
 uint8_t retUSER;    /* Return value for USER */
 char USERPath[4];   /* USER logical drive path */
 FATFS USERFatFS;    /* File system object for USER logical drive */
@@ -45,7 +49,19 @@ void MX_FATFS_Init(void)
 DWORD get_fattime(void)
 {
   /* USER CODE BEGIN get_fattime */
-  return 0;
+  RtcDateTime dt;
+  if (!RtcClock_Get(&dt)) {
+    return 0;                      /* horodatage inconnu (RTC absente) */
+  }
+  if (dt.year < 1980u) {
+    return 0;
+  }
+  return ((DWORD)(dt.year - 1980u) << 25)
+       | ((DWORD)(dt.month & 0x0Fu)   << 21)
+       | ((DWORD)(dt.day   & 0x1Fu)   << 16)
+       | ((DWORD)(dt.hours & 0x1Fu)   << 11)
+       | ((DWORD)(dt.minutes & 0x3Fu) << 5)
+       | ((DWORD)(dt.seconds / 2u) & 0x1Fu);
   /* USER CODE END get_fattime */
 }
 

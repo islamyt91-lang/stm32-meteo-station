@@ -78,4 +78,13 @@
 /* BH1750 : adresse 7 bits 0x23 (ADDR à GND) ou 0x5C (ADDR à VCC) */
 #define BH1750_ADDR_7BIT   0x23u
 
+/* Carte SD sur SPI1 (mode SPI du shield/lecteur) :
+ *  PA5 = SCK, PA6 = MISO, PA7 = MOSI, PB6 = SD_CS (chip select)          */
+#define SD_CS_PORT      GPIOB
+#define SD_CS_PIN       GPIO_PIN_6
+
+/* GPS sur USART3 (module NMEA, 9600 8N1 par défaut) :
+ *  PC10 = TX du STM32 (vers RX du module), PC11 = RX du STM32 (TX module) */
+#define GPS_UART_BAUD   9600u
+
 #endif /* WWW_CONFIG_H */

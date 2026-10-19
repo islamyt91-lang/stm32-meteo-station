@@ -10,7 +10,9 @@
   *   - RTC    (LSE PC14/PC15)       : horodatage
   *   - GPIO   PA0/PA1/PA4 LED RGB, PC13 bouton rouge, PC3 bouton vert,
   *            PB0 DHT11
-  * GPS (USART3), carte SD (SPI1) et FatFS sont retirés de cette version.
+  *   - SPI1   (PA5 SCK / PA6 MISO / PA7 MOSI, CS PB6) : carte SD
+  *   - USART3 (PC10 TX / PC11 RX)  : GPS NMEA 9600 8N1
+  *   - FatFS  sur carte SD (fichiers .LOG horodatés)
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -22,6 +24,8 @@
 #include "www_app.h"
 #include "console.h"
 #include "buttons.h"
+#include "gps.h"
+#include "sd_card.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -32,8 +36,14 @@ RTC_HandleTypeDef hrtc;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+SPI_HandleTypeDef hspi1;       /* carte SD */
+UART_HandleTypeDef huart3;     /* GPS     */
+
 RtcSource g_rtcSource = RTC_SRC_NONE;   /* LSE (quartz), LSI (secours) ou rien */
 static bool s_rtcOk;   /* MX_RTC_Init a réussi */
+
+void MX_SPI1_Init(void);
+void MX_USART3_UART_Init(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,7 +72,11 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  MX_SPI1_Init();          /* carte SD */
+  MX_USART3_UART_Init();   /* GPS     */
   App_Init(&hi2c1, &huart2, s_rtcOk ? &hrtc : NULL);
+  Gps_Init(&huart3);
+  SdCard_Init();           /* monte FatFS + ouvre le journal du jour */
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -272,15 +286,64 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief SPI1 Initialization Function : carte SD (PA5/PA6/PA7).
+  *        La broche CS (PB6) est initialisée par le pilote sd_card.c.
+  */
+void MX_SPI1_Init(void)
+{
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;      /* mode SPI SD = CPOL=0 CPHA=0 */
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; /* piloté par user_diskio */
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief USART3 Initialization Function : GPS NMEA (PC10/PC11, 9600 8N1).
+  */
+void MX_USART3_UART_Init(void)
+{
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 9600;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
 /* Relais des callbacks HAL vers les modules */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   Console_RxCpltCallback(huart);
+  Gps_RxCpltCallback(huart);
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
   Console_ErrorCallback(huart);
+  Gps_ErrorCallback(huart);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

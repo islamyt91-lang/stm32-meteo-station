@@ -109,6 +109,27 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_NVIC_SetPriority(USART2_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
   }
+  else if(huart->Instance==USART3)   /* GPS */
+  {
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART3;
+    PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_RCC_USART3_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;   /* PC10 TX / PC11 RX */
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART3;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(USART3_IRQn, 3, 0);          /* < console (2) */
+    HAL_NVIC_EnableIRQ(USART3_IRQn);
+  }
 }
 
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
@@ -118,5 +139,40 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     __HAL_RCC_USART2_CLK_DISABLE();
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3);
     HAL_NVIC_DisableIRQ(USART2_IRQn);
+  }
+  else if(huart->Instance==USART3)
+  {
+    __HAL_RCC_USART3_CLK_DISABLE();
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_10|GPIO_PIN_11);
+    HAL_NVIC_DisableIRQ(USART3_IRQn);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * SPI1 : PA5 = SCK, PA6 = MISO, PA7 = MOSI (AF5) pour la carte SD.
+ *        CS = PB6, géré par le pilote (sd_card.c / user_diskio.c).
+ * ------------------------------------------------------------------------- */
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(hspi->Instance==SPI1)
+  {
+    __HAL_RCC_SPI1_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  }
+}
+
+void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
+{
+  if(hspi->Instance==SPI1)
+  {
+    __HAL_RCC_SPI1_CLK_DISABLE();
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
   }
 }

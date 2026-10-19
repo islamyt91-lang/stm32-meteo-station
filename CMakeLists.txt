@@ -42,6 +42,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/console.c
     Core/Src/settings.c
     Core/Src/rtc_clock.c
+    Core/Src/gps.c
+    Core/Src/sd_card.c
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

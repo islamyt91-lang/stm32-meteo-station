@@ -13,6 +13,7 @@
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;   /* GPS */
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
@@ -88,6 +89,14 @@ void SysTick_Handler(void)
 void USART2_IRQHandler(void)
 {
   HAL_UART_IRQHandler(&huart2);
+}
+
+/**
+  * @brief This function handles USART3 global interrupt (réception GPS NMEA).
+  */
+void USART3_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart3);
 }
 
 /**
