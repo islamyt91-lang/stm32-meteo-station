@@ -14,7 +14,7 @@
 
 typedef struct {
     uint32_t log_interval_s;   /* LOG_INTERVAL (min) ou LOG_INTERVAL_S (s)  */
-    uint32_t file_max_size;    /* FILE_MAX_SIZE (octets) - réservé carte SD */
+    uint32_t file_max_size;    /* FILE_MAX_SIZE (octets) avant archivage  */
     uint16_t timeout_s;        /* TIMEOUT : abandon d'une acquisition       */
 
     uint8_t  lumin;            /* LUMIN {0,1}                               */

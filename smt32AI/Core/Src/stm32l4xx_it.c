@@ -13,6 +13,7 @@
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
@@ -96,4 +97,12 @@ void USART2_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+}
+
+/**
+  * @brief This function handles USART3 global interrupt (GPS).
+  */
+void USART3_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart3);
 }

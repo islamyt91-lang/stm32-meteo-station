@@ -1,0 +1,12 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:31:13:out	216	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:43:13:uart2_init	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:74:13:dwt_init	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:92:13:dht_gpio_init	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:105:13:wait_level	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:116:20:dht_read	56	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:157:20:dht_err_text	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:173:13:bh1750_init	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:183:13:bh1750_read	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:193:13:i2c_scan	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:213:6:SensorTest_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_test.c:235:6:SensorTest_Process	80	static

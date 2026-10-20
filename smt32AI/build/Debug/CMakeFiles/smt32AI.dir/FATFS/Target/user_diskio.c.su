@@ -1,0 +1,6 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:40:6:USER_ForceReinit	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:47:16:USER_initialize	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:54:16:USER_status	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:61:16:USER_read	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:70:16:USER_write	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/FATFS/Target/user_diskio.c:79:16:USER_ioctl	24	static

@@ -1,0 +1,6 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:24:13:read_raw	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:26:6:Buttons_Init	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:51:6:Buttons_Update	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:75:6:Buttons_IsPressed	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:77:6:Buttons_IsLongPressed	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/button_manager.c:85:20:Buttons_Test	56	static

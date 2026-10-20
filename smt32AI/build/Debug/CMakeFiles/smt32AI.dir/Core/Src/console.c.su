@@ -1,0 +1,8 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:20:5:__io_putchar	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:29:13:tx	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:34:13:start_rx	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:39:6:Console_Init	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:48:6:Console_RxCpltCallback	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:60:6:Console_ErrorCallback	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:70:6:Console_TakeActivity	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/console.c:77:6:Console_GetLine	32	static

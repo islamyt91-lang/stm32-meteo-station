@@ -1,0 +1,13 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:60:5:main	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:98:6:SystemClock_Config	232	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:168:13:MX_I2C1_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:197:13:rtc_start	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:213:13:MX_RTC_Init	80	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:263:13:MX_USART2_UART_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:284:13:MX_USART3_UART_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:306:13:MX_SPI1_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:331:13:MX_GPIO_Init	48	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:386:6:HAL_UART_RxCpltCallback	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:392:6:HAL_UART_ErrorCallback	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:398:6:HAL_GPIO_EXTI_Callback	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/main.c:411:6:Error_Handler	16	static

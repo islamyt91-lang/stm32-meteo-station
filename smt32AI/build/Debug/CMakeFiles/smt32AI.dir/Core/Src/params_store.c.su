@@ -1,0 +1,6 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:11:17:crc32_calc	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:21:17:cfg_crc	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:26:6:Params_SetDefaults	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:40:6:Params_Validate	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:60:6:Params_Load	64	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/params_store.c:72:19:Params_Save	112	static

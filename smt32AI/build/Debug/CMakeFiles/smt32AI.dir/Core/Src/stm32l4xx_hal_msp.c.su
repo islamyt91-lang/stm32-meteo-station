@@ -1,0 +1,9 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:14:6:HAL_MspInit	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:23:6:HAL_I2C_MspInit	184	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:48:6:HAL_I2C_MspDeInit	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:60:6:HAL_RTC_MspInit	152	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:76:6:HAL_RTC_MspDeInit	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:87:6:HAL_UART_MspInit	192	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:136:6:HAL_UART_MspDeInit	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:155:6:HAL_SPI_MspInit	48	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/stm32l4xx_hal_msp.c:177:6:HAL_SPI_MspDeInit	16	static

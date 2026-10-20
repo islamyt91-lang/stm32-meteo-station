@@ -46,11 +46,31 @@ static void apply(RgbColor c, uint8_t step)
     write_channel(RGB_B_PORT, RGB_B_PIN, step < d[2]);
 }
 
+static void config_pin(GPIO_TypeDef *port, uint16_t pin)
+{
+    GPIO_InitTypeDef g = {0};
+    g.Pin   = pin;
+    g.Mode  = GPIO_MODE_OUTPUT_PP;
+    g.Pull  = GPIO_NOPULL;
+    g.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(port, &g);
+}
+
 void RGB_Init(void)
 {
-    /* Les GPIO sont initialisées par MX_GPIO_Init() ; on éteint tout. */
-    RGB_SetSolid(RGB_OFF);
+    /* On configure nous-mêmes les 3 broches en sortie : la LED ne dépend
+     * plus de la configuration CubeMX (si PA0 n'y est pas en GPIO_Output,
+     * le rouge ne s'allumait jamais). */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
     apply(RGB_OFF, 0);
+    config_pin(RGB_R_PORT, RGB_R_PIN);
+    config_pin(RGB_G_PORT, RGB_G_PIN);
+    config_pin(RGB_B_PORT, RGB_B_PIN);
+    apply(RGB_OFF, 0);
+
+    RGB_SetSolid(RGB_OFF);
 }
 
 void RGB_SetSolid(RgbColor c)

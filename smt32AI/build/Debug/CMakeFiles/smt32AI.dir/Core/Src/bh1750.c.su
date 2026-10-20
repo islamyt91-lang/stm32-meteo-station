@@ -1,0 +1,6 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:28:26:send_cmd	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:38:13:recover_bus	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:46:22:configure	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:61:15:BH1750_Init	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:69:15:BH1750_ReadLux	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/bh1750.c:99:10:BH1750_LastI2CError	4	static

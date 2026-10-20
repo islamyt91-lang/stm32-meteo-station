@@ -1,0 +1,4 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/uart_console.c:11:6:Console_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/uart_console.c:17:6:Console_Print	272	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/uart_console.c:30:10:Console_GetLastActivityTick	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/uart_console.c:32:6:Console_PollLine	24	static

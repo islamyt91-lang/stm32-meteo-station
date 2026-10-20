@@ -8,20 +8,23 @@
   *   - I2C1   (PB8 SCL / PB9 SDA)   : BH1750
   *   - USART2 (PA2 TX / PA3 RX)     : console 115200 8N1 (port COM ST-LINK)
   *   - RTC    (LSE PC14/PC15)       : horodatage
-  *   - GPIO   PA0/PA1/PA4 LED RGB, PC13 bouton rouge, PC3 bouton vert,
+  *   - USART3 (PC10 TX / PC11 RX)   : GPS 9600 8N1
+  *   - SPI1   (PA5/PA6/PA7) + PB6 CS: carte SD (FatFs)
+  *   - GPIO   PA0/PA1/PA4 LED RGB, PC13 bouton rouge, PC0 (A5) bouton vert,
   *            PB0 DHT11
-  * GPS (USART3), carte SD (SPI1) et FatFS sont retirés de cette version.
   ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "www_app.h"
 #include "console.h"
 #include "buttons.h"
+#include "gps.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -29,10 +32,14 @@ I2C_HandleTypeDef hi2c1;
 
 RTC_HandleTypeDef hrtc;
 
+SPI_HandleTypeDef hspi1;
+
 UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 RtcSource g_rtcSource = RTC_SRC_NONE;   /* LSE (quartz), LSI (secours) ou rien */
+const char *g_rtcDiag = "";              /* explication affichee au demarrage */
 static bool s_rtcOk;   /* MX_RTC_Init a réussi */
 /* USER CODE END PV */
 
@@ -41,7 +48,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_RTC_Init(void);
+static bool rtc_start(RtcSource src);
 static void MX_USART2_UART_Init(void);
+static void MX_USART3_UART_Init(void);
+static void MX_SPI1_Init(void);
 
 /**
   * @brief  The application entry point.
@@ -60,9 +70,12 @@ int main(void)
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_SPI1_Init();
+  MX_FATFS_Init();
 
   /* USER CODE BEGIN 2 */
-  App_Init(&hi2c1, &huart2, s_rtcOk ? &hrtc : NULL);
+  App_Init(&hi2c1, &huart2, &huart3, &hspi1, s_rtcOk ? &hrtc : NULL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -181,14 +194,9 @@ static void MX_I2C1_Init(void)
   * @brief RTC Initialization Function (calendrier 24 h, 1 Hz)
   *        Une erreur ici n'arrête pas le système : elle est signalée.
   */
-static void MX_RTC_Init(void)
+static bool rtc_start(RtcSource src)
 {
-  s_rtcOk = false;
-  if (g_rtcSource == RTC_SRC_NONE)
-  {
-    return;   /* aucune horloge 32 kHz : RTC inutilisable */
-  }
-
+  g_rtcSource = src;
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
   hrtc.Init.AsynchPrediv = 127;
@@ -198,8 +206,55 @@ static void MX_RTC_Init(void)
   hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  s_rtcOk = (HAL_RTC_Init(&hrtc) == HAL_OK);
-  /* La date/heure n'est PAS écrasée ici : voir RtcClock_Init() */
+  hrtc.State = HAL_RTC_STATE_RESET;   /* refait HAL_RTC_MspInit (choix de l'horloge) */
+  return HAL_RTC_Init(&hrtc) == HAL_OK;
+}
+
+static void MX_RTC_Init(void)
+{
+  RCC_OscInitTypeDef osc = {0};
+  uint32_t rtcsel;
+
+  s_rtcOk = false;
+
+  /* 1) Quartz LSE s'il a démarré */
+  if (g_rtcSource == RTC_SRC_LSE)
+  {
+    if (rtc_start(RTC_SRC_LSE))
+    {
+      s_rtcOk = true;
+      g_rtcDiag = "quartz LSE";
+      return;
+    }
+    g_rtcDiag = "le quartz LSE demarre mais la RTC ne s'initialise pas";
+  }
+
+  /* 2) Secours : oscillateur interne LSI */
+  osc.OscillatorType = RCC_OSCILLATORTYPE_LSI;
+  osc.LSIState = RCC_LSI_ON;
+  osc.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&osc) != HAL_OK)
+  {
+    g_rtcSource = RTC_SRC_NONE;
+    g_rtcDiag = "ni LSE ni LSI ne demarrent";
+    return;
+  }
+  /* La source de la RTC ne peut changer qu'apres un reset du domaine de
+   * sauvegarde : on le fait seulement si elle est reglee sur autre chose. */
+  rtcsel = RCC->BDCR & RCC_BDCR_RTCSEL;
+  if (rtcsel != 0u && rtcsel != RCC_RTCCLKSOURCE_LSI)
+  {
+    __HAL_RCC_BACKUPRESET_FORCE();
+    __HAL_RCC_BACKUPRESET_RELEASE();
+  }
+  if (rtc_start(RTC_SRC_LSI))
+  {
+    s_rtcOk = true;
+    if (g_rtcDiag[0] == '\0') g_rtcDiag = "oscillateur LSI (quartz absent)";
+    return;
+  }
+  g_rtcSource = RTC_SRC_NONE;
+  g_rtcDiag = "la RTC ne s'initialise ni sur LSE ni sur LSI";
 }
 
 /**
@@ -224,6 +279,53 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function (GPS, 9600 8N1)
+  */
+static void MX_USART3_UART_Init(void)
+{
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 9600;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief SPI1 Initialization Function (carte SD, mode 0, 8 bits, maître).
+  *        Démarre lent (312 kHz), le pilote SD accélère après l'init.
+  */
+static void MX_SPI1_Init(void)
+{
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
   * @brief GPIO Initialization Function
   */
 static void MX_GPIO_Init(void)
@@ -236,9 +338,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /* Niveaux initiaux : LED RGB éteinte, ligne DHT11 relâchée (haut) */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+  /* Niveaux initiaux : LED RGB éteinte (anode commune -> broches à 1),
+   * ligne DHT11 relâchée (haut), CS carte SD désélectionné (haut) */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_6, GPIO_PIN_SET);
 
   /* PC13 : bouton rouge (B1), interruption front descendant, pull-up */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -246,7 +349,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /* PC0 : bouton vert externe, entrée pull-up */
+  /* PC0 (A5) : bouton vert externe, entrée pull-up */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -266,6 +369,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* PB6 (D10) : CS de la carte SD (fronts lents, fils Dupont) */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* EXTI interrupt init */
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -275,12 +385,14 @@ static void MX_GPIO_Init(void)
 /* Relais des callbacks HAL vers les modules */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  Console_RxCpltCallback(huart);
+  Console_RxCpltCallback(huart);   /* USART2 : console */
+  GPS_RxCpltCallback(huart);       /* USART3 : GPS     */
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
   Console_ErrorCallback(huart);
+  GPS_ErrorCallback(huart);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -301,8 +413,8 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   __disable_irq();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  GPIOA->BSRR = GPIO_PIN_0;              /* rouge */
-  GPIOA->BSRR = (uint32_t)(GPIO_PIN_1 | GPIO_PIN_4) << 16;
+  /* rouge seul (anode commune : 0 = allumé) */
+  GPIOA->BSRR = ((uint32_t)GPIO_PIN_0 << 16) | GPIO_PIN_1 | GPIO_PIN_4;
   while (1)
   {
   }

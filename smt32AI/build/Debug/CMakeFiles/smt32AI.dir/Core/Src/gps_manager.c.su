@@ -1,0 +1,6 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:13:16:GPS_Init	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:14:16:GPS_IsInstalled	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:15:16:GPS_RequestAcquisition	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:16:16:GPS_Process	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:17:16:GPS_GetStatus	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/gps_manager.c:19:20:GPS_Test	8	static

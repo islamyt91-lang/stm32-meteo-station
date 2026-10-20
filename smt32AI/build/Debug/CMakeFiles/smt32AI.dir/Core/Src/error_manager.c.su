@@ -1,0 +1,5 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/error_manager.c:5:10:ErrMgr_Set	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/error_manager.c:6:10:ErrMgr_Clear	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/error_manager.c:7:10:ErrMgr_GetMask	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/error_manager.c:11:15:ErrMgr_GetPrimary	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/error_manager.c:22:13:ErrMgr_Name	16	static

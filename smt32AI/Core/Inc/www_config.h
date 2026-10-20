@@ -13,7 +13,7 @@
 /* ----------------------------------------------------------------------------
  * Version / traçabilité (commande VERSION)
  * ------------------------------------------------------------------------- */
-#define WWW_VERSION              "1.0.0"
+#define WWW_VERSION              "1.2.0"
 #define WWW_LOT                  "LOT-2026-A2-001"
 
 /* ----------------------------------------------------------------------------
@@ -34,6 +34,16 @@
 #define WWW_DEFAULT_LOG_INTERVAL_S   (10u * 60u)
 #define WWW_CONFIG_IDLE_TIMEOUT_MS   (30u * 60u * 1000u)
 #endif
+
+/* ----------------------------------------------------------------------------
+ * ACTIVATION DE LA CARTE SD ET DU GPS
+ *  0 : désactivé -> comportement identique à la v2 (6 colonnes, aucune
+ *      erreur SD ou GPS, LED verte en mode standard)
+ *  1 : activé    -> enregistrement sur carte SD / colonnes LATITUDE;LONGITUDE
+ * Activer l'un puis l'autre, en vérifiant le montage à chaque fois.
+ * ------------------------------------------------------------------------- */
+#define WWW_ENABLE_SD                1
+#define WWW_ENABLE_GPS               0
 
 /* Période d'affichage en mode maintenance (>= 2 s à cause du DHT11) */
 #define WWW_MAINT_PERIOD_MS          5000u
@@ -64,7 +74,7 @@
 
 /* Boutons (actifs à l'état bas, pull-up) :
  *  - bouton ROUGE = B1 bleu de la carte (PC13)
- *  - bouton VERT  = bouton externe (PC3)
+ *  - bouton VERT  = bouton externe (PC0 = A5)
  * Inverser ici si votre montage est différent. */
 #define BTN_RED_PORT    GPIOC
 #define BTN_RED_PIN     GPIO_PIN_13
@@ -77,5 +87,12 @@
 
 /* BH1750 : adresse 7 bits 0x23 (ADDR à GND) ou 0x5C (ADDR à VCC) */
 #define BH1750_ADDR_7BIT   0x23u
+
+/* Carte SD : SPI1 (PA5 SCK = D13, PA6 MISO = D12, PA7 MOSI = D11),
+ * CS sur PB6 (D10) */
+#define SD_CS_PORT      GPIOB
+#define SD_CS_PIN       GPIO_PIN_6
+
+/* GPS : USART3 (PC10 TX -> RX du GPS, PC11 RX <- TX du GPS), 9600 bauds */
 
 #endif /* WWW_CONFIG_H */

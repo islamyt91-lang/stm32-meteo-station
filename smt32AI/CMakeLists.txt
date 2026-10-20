@@ -14,7 +14,6 @@ endif()
 set(CMAKE_PROJECT_NAME smt32AI)
 
 # Toolchain ARM
-include("cmake/gcc-arm-none-eabi.cmake")
 
 # Pour l'indexation (IntelliSense / clangd)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -26,7 +25,7 @@ enable_language(C ASM)
 
 add_executable(${CMAKE_PROJECT_NAME})
 
-# Sources générées par STM32CubeMX (HAL, main.c, startup...)
+# Sources générées par STM32CubeMX (HAL, main.c, FatFs, startup...)
 add_subdirectory(cmake/stm32cubemx)
 
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -42,6 +41,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/console.c
     Core/Src/settings.c
     Core/Src/rtc_clock.c
+    Core/Src/sd_spi.c
+    Core/Src/sdlog.c
+    Core/Src/gps.c
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

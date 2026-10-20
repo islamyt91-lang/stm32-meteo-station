@@ -1,0 +1,17 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Inc/station_types.h:133:27:TestResult_Name	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:34:13:bump	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:36:6:Sensors_Init	96	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:46:6:Sensors_StartCycle	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:61:6:Sensors_AbortCycle	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:63:23:map_dht_fail	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:73:13:finish_cycle	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:104:6:Sensors_Process	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:140:6:Sensors_ValidateAll	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:206:6:Sensors_ReadAll	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:217:16:Sensors_GetStatus	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:228:21:Sensors_GetData	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:230:13:add_field	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:240:8:Sensors_FormatLogLine	48	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:259:27:worst	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:267:20:Sensors_TestSensor	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sensor_manager.c:305:20:Sensors_TestAll	16	static

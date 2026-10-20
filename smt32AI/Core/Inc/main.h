@@ -25,12 +25,13 @@ void Error_Handler(void);
 /* Source d'horloge de la RTC choisie au démarrage */
 typedef enum { RTC_SRC_NONE = 0, RTC_SRC_LSE, RTC_SRC_LSI } RtcSource;
 extern RtcSource g_rtcSource;
+extern const char *g_rtcDiag;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define BTN2_Pin GPIO_PIN_3
+#define BTN2_Pin GPIO_PIN_0
 #define BTN2_GPIO_Port GPIOC
 #define LED_R_Pin GPIO_PIN_0
 #define LED_R_GPIO_Port GPIOA
@@ -50,6 +51,8 @@ extern RtcSource g_rtcSource;
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define SD_CS_Pin GPIO_PIN_6
+#define SD_CS_GPIO_Port GPIOB
 
 #ifdef __cplusplus
 }

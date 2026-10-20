@@ -1,0 +1,11 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:36:20:fail	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:49:13:free_space_ok	48	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:60:13:SDLog_Mount	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:76:6:SDLog_Unmount	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:86:6:SDLog_IsMounted	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:91:13:make_name	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:97:16:archive	160	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:128:13:SDLog_Append	96	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:180:13:SDLog_LastStatus	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:185:13:SDLog_StatusStr	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sdlog.c:196:13:SDLog_Detail	24	static

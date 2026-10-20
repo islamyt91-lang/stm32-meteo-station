@@ -1,0 +1,8 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:9:6:SD_BuildFileName	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:17:12:SD_Init	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:18:12:SD_IsInstalled	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:19:12:SD_GetState	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:20:12:SD_WriteLine	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:21:12:SD_PrepareRemoval	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:22:12:SD_Resume	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/sd_manager.c:24:20:SD_Test	32	static

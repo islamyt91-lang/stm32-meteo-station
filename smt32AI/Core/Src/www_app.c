@@ -15,8 +15,9 @@
  *  jusqu'à réussite ou TIMEOUT, puis écrit UNE ligne horodatée. Pendant ce
  *  temps les boutons et la console continuent d'être traités.
  *
- *  GPS et carte SD : retirés de cette version (aucune erreur associée).
- *  La ligne produite est déjà au format CSV prévu pour le fichier .LOG.
+ *  Carte SD : chaque ligne est aussi écrite dans AAMMJJ_0.LOG (modes
+ *  standard et économique). En maintenance la carte est démontée.
+ *  GPS : position lue à chaque mesure (une mesure sur deux en économique).
  */
 #include "www_app.h"
 #include "main.h"
@@ -28,6 +29,9 @@
 #include "dht11.h"
 #include "bh1750.h"
 #include "rtc_clock.h"
+#include "sdlog.h"
+#include "gps.h"
+#include "sd_spi.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -39,7 +43,7 @@
 /* ========================================================================== */
 typedef enum { MODE_STANDARD, MODE_CONFIG, MODE_ECO, MODE_MAINT } Mode;
 
-typedef enum { SENS_OFF, SENS_PENDING, SENS_DONE, SENS_TIMEOUT } SensState;
+typedef enum { SENS_OFF, SENS_PENDING, SENS_DONE, SENS_TIMEOUT, SENS_NOFIX } SensState;
 
 typedef struct {
     bool     active;
@@ -52,6 +56,9 @@ typedef struct {
     SensState luxState;
     uint32_t lux_x10;
     uint32_t luxNextTryMs;
+    /* GPS */
+    SensState gpsState;
+    GpsFix    gps;
 } Acquisition;
 
 /* ========================================================================== */
@@ -62,11 +69,14 @@ static Mode     s_maintReturn = MODE_STANDARD;
 static uint32_t s_nextAcqMs;
 static uint32_t s_configLastActivityMs;
 static uint32_t s_lastRtcCheckMs;
+static uint32_t s_lastSdRetryMs;
 static Acquisition s_acq;
 
 /* Compteurs de timeouts consécutifs (2 -> capteur en erreur) */
-static uint8_t s_dhtTimeouts, s_luxTimeouts;
+static uint8_t s_dhtTimeouts, s_luxTimeouts, s_gpsTimeouts;
 static bool    s_errSensorAccess;   /* rouge/vert 1:1 */
+static bool    s_errGps;            /* rouge/jaune 1:1 */
+static bool    s_gpsSkipNext;       /* mode éco : GPS une mesure sur deux */
 static bool    s_errIncoherent;     /* rouge/vert 1:2 */
 static bool    s_rtcErrReported;
 
@@ -110,12 +120,21 @@ static bool acquisition_mode(Mode m)
 /* ========================================================================== */
 static void update_led(void)
 {
-    /* Priorité : RTC > accès capteur > données incohérentes > couleur du mode */
+    /* Priorité : RTC > SD (écriture, pleine) > GPS > accès capteur >
+     * données incohérentes > couleur du mode. Toutes à 1 Hz. */
     if (!RtcClock_IsOk()) {
         RGB_SetBlink(RGB_RED, 500, RGB_BLUE, 500);
         return;
     }
+    if (WWW_ENABLE_SD && (s_mode == MODE_STANDARD || s_mode == MODE_ECO)) {
+        SdLogStatus sd = SDLog_LastStatus();
+        if (sd == SDLOG_WRITE_ERROR || sd == SDLOG_NOT_MOUNTED) {
+            RGB_SetBlink(RGB_RED, 333, RGB_WHITE, 667); return;
+        }
+        if (sd == SDLOG_FULL) { RGB_SetBlink(RGB_RED, 500, RGB_WHITE, 500); return; }
+    }
     if (acquisition_mode(s_mode)) {
+        if (s_errGps)          { RGB_SetBlink(RGB_RED, 500, RGB_YELLOW, 500); return; }
         if (s_errSensorAccess) { RGB_SetBlink(RGB_RED, 500, RGB_GREEN, 500); return; }
         if (s_errIncoherent)   { RGB_SetBlink(RGB_RED, 333, RGB_GREEN, 667); return; }
     }
@@ -130,9 +149,17 @@ static void update_led(void)
 /* ========================================================================== */
 /*  Acquisition                                                               */
 /* ========================================================================== */
+#if WWW_ENABLE_GPS
+static const char kHeader[] =
+    "DATE_HEURE;MODE;LATITUDE;LONGITUDE;TEMP_AIR_C;HYGR_PCT;LUMIN_LUX;LUMIN_NIVEAU\r\n";
+#else
+static const char kHeader[] =
+    "DATE_HEURE;MODE;TEMP_AIR_C;HYGR_PCT;LUMIN_LUX;LUMIN_NIVEAU\r\n";
+#endif
+
 static void print_header(void)
 {
-    printf("DATE_HEURE;MODE;TEMP_AIR_C;HYGR_PCT;LUMIN_LUX;LUMIN_NIVEAU\r\n");
+    printf("%s", kHeader);
 }
 
 static void acq_start(uint32_t now)
@@ -144,6 +171,17 @@ static void acq_start(uint32_t now)
     s_acq.luxState = g_settings.lumin ? SENS_PENDING : SENS_OFF;
     s_acq.dhtLastErr = DHT11_OK;
     s_acq.luxNextTryMs = now;
+
+    /* GPS : en mode économique, une mesure sur deux seulement */
+    if (!WWW_ENABLE_GPS) {
+        s_acq.gpsState = SENS_OFF;
+    } else if (s_mode == MODE_ECO && s_gpsSkipNext) {
+        s_acq.gpsState = SENS_OFF;
+        s_gpsSkipNext = false;
+    } else {
+        s_acq.gpsState = SENS_PENDING;
+        s_gpsSkipNext = (s_mode == MODE_ECO);
+    }
 }
 
 static void acq_poll(uint32_t now)
@@ -175,16 +213,29 @@ static void acq_poll(uint32_t now)
     if (s_acq.luxState == SENS_PENDING && expired) {
         s_acq.luxState = SENS_TIMEOUT;
     }
+
+    /* --- GPS : première trame RMC reçue après le début de l'acquisition.
+     * Trame sans position (pas de vue du ciel) = réponse "NA", pas une
+     * erreur ; aucune trame avant TIMEOUT = timeout. */
+    if (s_acq.gpsState == SENS_PENDING) {
+        if (GPS_GetSince(s_acq.startMs, &s_acq.gps)) {
+            s_acq.gpsState = s_acq.gps.fix ? SENS_DONE : SENS_NOFIX;
+        } else if (expired) {
+            s_acq.gpsState = SENS_TIMEOUT;
+        }
+    }
 }
 
 static bool acq_finished(void)
 {
-    return s_acq.dhtState != SENS_PENDING && s_acq.luxState != SENS_PENDING;
+    return s_acq.dhtState != SENS_PENDING && s_acq.luxState != SENS_PENDING &&
+           s_acq.gpsState != SENS_PENDING;
 }
 
 static void acq_finish(void)
 {
-    char ts[32], tStr[12], hStr[12], lStr[16];
+    char ts[32], tStr[12], hStr[12], lStr[16], latStr[16], lonStr[16];
+    char line[160];
     const char *lvl = "NA";
     bool incoherent = false;
     RtcDateTime dt;
@@ -193,9 +244,12 @@ static void acq_finish(void)
     strcpy(tStr, "NA");
     strcpy(hStr, "NA");
     strcpy(lStr, "NA");
+    strcpy(latStr, "NA");
+    strcpy(lonStr, "NA");
 
     /* ---- Horodatage */
-    if (RtcClock_Get(&dt)) {
+    bool rtcOk = RtcClock_Get(&dt);
+    if (rtcOk) {
         snprintf(ts, sizeof(ts), "%04u-%02u-%02u %02u:%02u:%02u",
                  dt.year, dt.month, dt.day, dt.hours, dt.minutes, dt.seconds);
     } else {
@@ -256,11 +310,46 @@ static void acq_finish(void)
         s_luxTimeouts = 0;
     }
 
+    /* ---- GPS */
+    if (s_acq.gpsState == SENS_DONE) {
+        s_gpsTimeouts = 0;
+        GPS_FormatCoord(latStr, sizeof(latStr), s_acq.gps.lat_e6);
+        GPS_FormatCoord(lonStr, sizeof(lonStr), s_acq.gps.lon_e6);
+    } else if (s_acq.gpsState == SENS_NOFIX) {
+        s_gpsTimeouts = 0;              /* le GPS repond, mais sans position */
+    } else if (s_acq.gpsState == SENS_TIMEOUT) {
+        if (s_gpsTimeouts < 255) s_gpsTimeouts++;
+        printf("[ERREUR] GPS : aucune trame recue en %u s, timeout %u/2\r\n",
+               g_settings.timeout_s, s_gpsTimeouts > 2 ? 2 : s_gpsTimeouts);
+    }
+
     /* ---- Une seule ligne par acquisition */
-    printf("%s;%s;%s;%s;%s;%s\r\n", ts, mode_name(s_mode), tStr, hStr, lStr, lvl);
+#if WWW_ENABLE_GPS
+    snprintf(line, sizeof(line), "%s;%s;%s;%s;%s;%s;%s;%s\r\n", ts, mode_name(s_mode),
+             latStr, lonStr, tStr, hStr, lStr, lvl);
+#else
+    snprintf(line, sizeof(line), "%s;%s;%s;%s;%s;%s\r\n", ts, mode_name(s_mode),
+             tStr, hStr, lStr, lvl);
+#endif
+    printf("%s", line);
+
+    /* ---- Carte SD (pas en maintenance) */
+    if (WWW_ENABLE_SD && (s_mode == MODE_STANDARD || s_mode == MODE_ECO)) {
+        SdLogStatus before = SDLog_LastStatus();
+        SdLogStatus st = SDLog_Append(rtcOk ? (uint8_t)(dt.year % 100u) : 0,
+                                      rtcOk ? dt.month : 0, rtcOk ? dt.day : 0,
+                                      line, kHeader, g_settings.file_max_size);
+        if (st != SDLOG_OK && st != before) {
+            printf("[ERREUR] Carte SD : %s\r\n         detail : %s\r\n",
+                   SDLog_StatusStr(st), SDLog_Detail());
+        } else if (st == SDLOG_OK && before != SDLOG_OK) {
+            printf("[INFO] Carte SD : ecriture OK\r\n");
+        }
+    }
 
     /* ---- Mise à jour des erreurs */
     s_errSensorAccess = (s_dhtTimeouts >= 2) || (s_luxTimeouts >= 2);
+    s_errGps          = (s_gpsTimeouts >= 2);
     s_errIncoherent   = incoherent;
 }
 
@@ -294,13 +383,26 @@ static void enter_mode(Mode m)
         break;
     case MODE_MAINT:
         s_maintReturn = old;
-        printf("Mesures en direct toutes les %lu s. La carte SD peut etre retiree.\r\n"
-               "Rouge 5 s : retour en mode %s.\r\n",
-               (unsigned long)(WWW_MAINT_PERIOD_MS / 1000u), mode_name(old));
+        printf("Mesures en direct toutes les %lu s.\r\n",
+               (unsigned long)(WWW_MAINT_PERIOD_MS / 1000u));
+        if (WWW_ENABLE_SD) {
+            SDLog_Unmount();
+            printf("[SD] Carte demontee : retrait possible en toute securite.\r\n");
+        }
+        printf("Rouge 5 s : retour en mode %s.\r\n", mode_name(old));
         print_header();
         break;
     case MODE_ECO:
     case MODE_STANDARD:
+        s_gpsSkipNext = false;
+        if (WWW_ENABLE_SD) {
+            if (SDLog_Mount() == SDLOG_OK) {
+                printf("Carte SD : OK\r\n");
+            } else {
+                printf("[ERREUR] Carte SD : %s\r\n         detail : %s\r\n",
+                       SDLog_StatusStr(SDLog_LastStatus()), SDLog_Detail());
+            }
+        }
         printf("Intervalle de mesure : %lu s\r\n", (unsigned long)(current_period_ms() / 1000u));
         print_header();
         break;
@@ -350,7 +452,7 @@ typedef struct {
 } Param;
 
 static const Param kParams[] = {
-    {"FILE_MAX_SIZE", P_U32, &g_settings.file_max_size, 512, 65536, "octets (reserve carte SD)"},
+    {"FILE_MAX_SIZE", P_U32, &g_settings.file_max_size, 512, 1048576, "octets"},
     {"TIMEOUT",       P_U16, &g_settings.timeout_s, TIMEOUT_MIN_S, TIMEOUT_MAX_S, "s"},
     {"LUMIN",         P_U8,  &g_settings.lumin, 0, 1, ""},
     {"LUMIN_LOW",     P_U32, &g_settings.lumin_low, 0, LUMIN_MAX_LUX, "lux"},
@@ -402,7 +504,7 @@ static void print_help(void)
            "  LOG_INTERVAL=10        intervalle en minutes (1-1440)\r\n"
            "  LOG_INTERVAL_S=10      intervalle en secondes (tests rapides, >= 5)\r\n"
            "  TIMEOUT=30             abandon d'une mesure (s)\r\n"
-           "  FILE_MAX_SIZE=2048     taille max fichier log (reserve carte SD)\r\n"
+           "  FILE_MAX_SIZE=2048     taille max d'un fichier .LOG avant archivage\r\n"
            "  LUMIN=1  LUMIN_LOW=500  LUMIN_HIGH=10000      (seuils en lux)\r\n"
            "  TEMP_AIR=1  MIN_TEMP_AIR=-10  MAX_TEMP_AIR=60 (C)\r\n"
            "  HYGR=1  HYGR_MINT=0  HYGR_MAXT=50             (C)\r\n"
@@ -617,9 +719,12 @@ static void handle_console(uint32_t now)
 /*  API                                                                       */
 /* ========================================================================== */
 void App_Init(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart,
+              UART_HandleTypeDef *huartGps, SPI_HandleTypeDef *hspiSd,
               RTC_HandleTypeDef *hrtc)
 {
     Console_Init(huart);
+    GPS_Init(WWW_ENABLE_GPS ? huartGps : NULL);
+    SD_SPI_Attach(hspiSd);
     RGB_Init();
     Buttons_Init();
 
@@ -633,9 +738,12 @@ void App_Init(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart,
 
     RtcClock_Init(hrtc);
     if (!RtcClock_IsOk()) {
-        printf("[ERREUR] Horloge RTC inaccessible.\r\n");
+        printf("[ERREUR] Horloge RTC inaccessible : %s.\r\n", g_rtcDiag);
         s_rtcErrReported = true;
+    } else if (g_rtcSource == RTC_SRC_LSE) {
+        printf("[INFO] Horloge RTC : %s\r\n", g_rtcDiag);
     } else if (g_rtcSource == RTC_SRC_LSI) {
+        printf("[INFO] Horloge RTC : %s\r\n", g_rtcDiag);
         printf("[ATTENTION] Quartz 32,768 kHz (LSE) absent : RTC sur oscillateur "
                "interne LSI (derive possible, heure perdue hors tension).\r\n");
     }
@@ -658,6 +766,7 @@ void App_Loop(void)
 {
     uint32_t now = HAL_GetTick();
 
+    GPS_Process();
     Buttons_Update(now);
     handle_buttons();
     handle_console(now);
@@ -672,6 +781,15 @@ void App_Loop(void)
         } else if (ok && s_rtcErrReported) {
             printf("[INFO] Horloge RTC de nouveau disponible.\r\n");
             s_rtcErrReported = false;
+        }
+    }
+
+    /* Carte SD non montée : nouvel essai toutes les 10 s (hors mesure en cours) */
+    if (WWW_ENABLE_SD && (s_mode == MODE_STANDARD || s_mode == MODE_ECO) && !SDLog_IsMounted() &&
+        !s_acq.active && (now - s_lastSdRetryMs) >= 10000u) {
+        s_lastSdRetryMs = now;
+        if (SDLog_Mount() == SDLOG_OK) {
+            printf("[INFO] Carte SD : OK\r\n");
         }
     }
 

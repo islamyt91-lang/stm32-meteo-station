@@ -1,0 +1,16 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Inc/station_types.h:133:27:TestResult_Name	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:18:17:flags	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:24:13:set_flag	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:29:13:read_hal	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:36:13:refresh_state	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:42:6:RtcMgr_Init	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:57:6:RtcMgr_Update	48	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:78:12:RtcMgr_GetState	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:80:6:RtcMgr_GetStamp	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:91:6:RtcMgr_FormatStamp	56	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:104:16:weekday_of	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:112:6:RtcMgr_SetTime	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:127:6:RtcMgr_SetDate	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:143:6:RtcMgr_SetWeekday	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:152:13:RtcMgr_WeekdayName	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_manager.c:158:20:RtcMgr_Test	112	static

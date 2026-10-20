@@ -1,0 +1,10 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:22:16:weekday_of	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:31:13:set_from_build_time	32	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:52:6:RtcClock_Init	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:67:6:RtcClock_IsOk	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:72:6:RtcClock_Get	56	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:118:6:RtcClock_SetTime	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:133:16:days_in_month	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:140:6:RtcClock_SetDate	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:154:6:RtcClock_SetWeekday	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/rtc_clock.c:167:13:RtcClock_WeekdayStr	16	static

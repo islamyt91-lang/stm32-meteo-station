@@ -1,0 +1,9 @@
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:16:13:send_cmd	24	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:21:6:Luminosity_Init	8	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:34:15:Luminosity_Read	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:57:6:Luminosity_Validate	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:62:10:Luminosity_Normalize	40	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:68:14:Luminosity_Classify	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:75:13:Luminosity_ClassName	16	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:85:16:Luminosity_GetStatus	4	static
+C:/Users/LENOVO/Desktop/stm32-project-meteo-station/smt32AI/Core/Src/luminosity_sensor.c:87:20:Luminosity_Test	24	static

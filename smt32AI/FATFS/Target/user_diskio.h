@@ -1,40 +1,25 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
-  * @file    user_diskio.h
-  * @brief   This file contains the common defines and functions prototypes for
-  *          the user_diskio driver.
   ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
+  * @file    user_diskio.h
+  * @brief   Pilote FatFs "User-defined" : carte SD en SPI (voir sd_spi.c)
   ******************************************************************************
   */
- /* USER CODE END Header */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
+/* USER CODE END Header */
 #ifndef __USER_DISKIO_H
 #define __USER_DISKIO_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-/* USER CODE BEGIN 0 */
+#include "ff_gen_drv.h"
 
-/* Includes ------------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-extern Diskio_drvTypeDef  USER_Driver;
+extern Diskio_drvTypeDef USER_Driver;
 
-/* USER CODE END 0 */
+/** Force une réinitialisation de la carte au prochain f_mount
+ *  (après un retrait / une erreur). */
+void USER_ForceReinit(void);
 
 #ifdef __cplusplus
 }
